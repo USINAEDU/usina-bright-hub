@@ -7,7 +7,7 @@ import ContentCard from '@/components/ContentCard';
 import SectorDialog from '@/components/SectorDialog';
 import FolderDialog from '@/components/FolderDialog';
 import UploadDialog from '@/components/UploadDialog';
-import DocumentPreview from '@/components/DocumentPreview';
+import DocumentViewer from '@/components/DocumentViewer';
 import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,7 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, FolderPlus, Upload, MoreVertical, Pencil, Trash2, LayoutGrid, List } from 'lucide-react';
+import { Plus, FolderPlus, Upload, Pencil, Trash2, LayoutGrid, List } from 'lucide-react';
 import { BreadcrumbItem, Folder, Document, Sector } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -73,8 +73,7 @@ export default function Dashboard() {
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
-  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'sector' | 'folder' | 'document'; id: string; name: string } | null>(null);
@@ -332,7 +331,12 @@ export default function Dashboard() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-6">
-          {searchQuery && searchResults ? (
+          {viewingDocument ? (
+            <DocumentViewer
+              document={viewingDocument}
+              onBack={() => setViewingDocument(null)}
+            />
+          ) : searchQuery && searchResults ? (
             // Search Results
             <div className="space-y-6">
               {searchResults.sectors.length === 0 &&
@@ -366,10 +370,7 @@ export default function Dashboard() {
                             key={doc.id}
                             item={doc}
                             type="document"
-                            onClick={() => {
-                              setPreviewDocument(doc);
-                              setPreviewOpen(true);
-                            }}
+                            onClick={() => setViewingDocument(doc)}
                             index={i}
                           />
                         ))}
@@ -436,10 +437,7 @@ export default function Dashboard() {
                           <ContentCard
                             item={doc}
                             type="document"
-                            onClick={() => {
-                              setPreviewDocument(doc);
-                              setPreviewOpen(true);
-                            }}
+                            onClick={() => setViewingDocument(doc)}
                             index={currentFolders.length + i}
                           />
                         </ContextMenuTrigger>
@@ -483,12 +481,6 @@ export default function Dashboard() {
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         onUpload={handleUpload}
-      />
-
-      <DocumentPreview
-        document={previewDocument}
-        open={previewOpen}
-        onOpenChange={setPreviewOpen}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
