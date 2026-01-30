@@ -7,6 +7,7 @@ import ContentCard from '@/components/ContentCard';
 import SectorDialog from '@/components/SectorDialog';
 import FolderDialog from '@/components/FolderDialog';
 import UploadDialog from '@/components/UploadDialog';
+import DocumentDialog from '@/components/DocumentDialog';
 import DocumentViewer from '@/components/DocumentViewer';
 import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,7 @@ export default function Dashboard() {
     getFoldersByParent,
     getFolderDocumentCount,
     addDocument,
+    updateDocument,
     deleteDocument,
     getDocumentsByFolder,
     search,
@@ -72,6 +74,9 @@ export default function Dashboard() {
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
 
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+
+  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
 
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
 
@@ -215,6 +220,22 @@ export default function Dashboard() {
       title: 'Upload concluído',
       description: `${files.length} arquivo(s) enviado(s) com sucesso.`,
     });
+  };
+
+  const handleEditDocument = (doc: Document) => {
+    setEditingDocument(doc);
+    setDocumentDialogOpen(true);
+  };
+
+  const handleSaveDocument = (data: { name: string; description: string }) => {
+    if (editingDocument) {
+      updateDocument(editingDocument.id, data);
+      toast({ title: 'Documento atualizado', description: `O documento "${data.name}" foi atualizado.` });
+      // Update viewing document if it's the same one
+      if (viewingDocument?.id === editingDocument.id) {
+        setViewingDocument({ ...viewingDocument, ...data });
+      }
+    }
   };
 
   const handleDelete = () => {
@@ -439,6 +460,10 @@ export default function Dashboard() {
                           />
                         </ContextMenuTrigger>
                         <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleEditDocument(doc)}>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Editar
+                          </ContextMenuItem>
                           <ContextMenuItem
                             onClick={() => confirmDelete('document', doc.id, doc.name)}
                             className="text-destructive"
@@ -478,6 +503,13 @@ export default function Dashboard() {
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         onUpload={handleUpload}
+      />
+
+      <DocumentDialog
+        open={documentDialogOpen}
+        onOpenChange={setDocumentDialogOpen}
+        onSave={handleSaveDocument}
+        initialData={editingDocument ? { name: editingDocument.name, description: editingDocument.description } : undefined}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
