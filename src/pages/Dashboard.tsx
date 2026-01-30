@@ -391,7 +391,11 @@ export default function Dashboard() {
                 exit={{ opacity: 0 }}
               >
                 {currentFolders.length === 0 && currentDocuments.length === 0 ? (
-                  <EmptyState type="folder" />
+                  <EmptyState 
+                    type={currentFolderId ? 'document' : 'folder'} 
+                    onCreateFolder={handleAddFolder}
+                    onUpload={() => setUploadDialogOpen(true)}
+                  />
                 ) : (
                   <div className={`${
                     viewMode === 'grid'

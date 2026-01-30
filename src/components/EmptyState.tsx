@@ -1,12 +1,15 @@
 import { motion } from 'framer-motion';
-import { FolderOpen, FileText, Search } from 'lucide-react';
+import { FolderOpen, FileText, Search, FolderPlus, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
-  type: 'sector' | 'folder' | 'search';
+  type: 'sector' | 'folder' | 'document' | 'search';
   searchQuery?: string;
+  onCreateFolder?: () => void;
+  onUpload?: () => void;
 }
 
-export default function EmptyState({ type, searchQuery }: EmptyStateProps) {
+export default function EmptyState({ type, searchQuery, onCreateFolder, onUpload }: EmptyStateProps) {
   const content = {
     sector: {
       icon: FolderOpen,
@@ -14,7 +17,12 @@ export default function EmptyState({ type, searchQuery }: EmptyStateProps) {
       description: 'Escolha um setor na barra lateral para visualizar suas pastas e documentos.',
     },
     folder: {
-      icon: FileText,
+      icon: FolderPlus,
+      title: 'Setor vazio',
+      description: 'Este setor ainda não possui pastas. Crie uma pasta para organizar seus documentos.',
+    },
+    document: {
+      icon: Upload,
       title: 'Pasta vazia',
       description: 'Esta pasta ainda não possui documentos. Faça upload de arquivos para começar.',
     },
@@ -25,7 +33,7 @@ export default function EmptyState({ type, searchQuery }: EmptyStateProps) {
     },
   };
 
-  const { icon: Icon, title, description } = content[type];
+  const { icon: Icon, title, description } = content[type] || content.sector;
 
   return (
     <motion.div
@@ -37,7 +45,32 @@ export default function EmptyState({ type, searchQuery }: EmptyStateProps) {
         <Icon className="w-12 h-12 text-muted-foreground" />
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-muted-foreground max-w-md">{description}</p>
+      <p className="text-muted-foreground max-w-md mb-6">{description}</p>
+      
+      <div className="flex gap-3">
+        {type === 'folder' && onCreateFolder && (
+          <Button onClick={onCreateFolder} size="lg">
+            <FolderPlus className="w-5 h-5 mr-2" />
+            Criar Pasta
+          </Button>
+        )}
+        {type === 'document' && (
+          <>
+            {onCreateFolder && (
+              <Button variant="outline" onClick={onCreateFolder} size="lg">
+                <FolderPlus className="w-5 h-5 mr-2" />
+                Nova Subpasta
+              </Button>
+            )}
+            {onUpload && (
+              <Button onClick={onUpload} size="lg">
+                <Upload className="w-5 h-5 mr-2" />
+                Fazer Upload
+              </Button>
+            )}
+          </>
+        )}
+      </div>
     </motion.div>
   );
 }
