@@ -420,6 +420,8 @@ export default function Dashboard() {
                             item={folder}
                             type="folder"
                             onClick={() => handleFolderClick(folder)}
+                            onEdit={() => handleEditFolder(folder)}
+                            onDelete={() => confirmDelete('folder', folder.id, folder.name)}
                             index={i}
                           />
                         </ContextMenuTrigger>
@@ -447,6 +449,8 @@ export default function Dashboard() {
                             item={doc}
                             type="document"
                             onClick={() => setViewingDocument(doc)}
+                            onEdit={() => handleEditDocument(doc)}
+                            onDelete={() => confirmDelete('document', doc.id, doc.name)}
                             index={currentFolders.length + i}
                           />
                         </ContextMenuTrigger>
