@@ -1,54 +1,108 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/types';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase';
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const MOCK_USER: User = {
-  id: '1',
-  email: 'admin@usinaedu.com.br',
-  name: 'Administrador',
-};
-
-const MOCK_PASSWORD = 'admin123';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('usina_docs_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+  // Verifica se o usuário tem role de admin
+  const checkAdminRole = async (userId: string) => {
+    try {
+      // Tenta chamar a função has_role se ela existir
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      if (!error && data) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    } catch {
+      setIsAdmin(false);
     }
-    setIsLoading(false);
-  }, []);
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    if (email === MOCK_USER.email && password === MOCK_PASSWORD) {
-      setUser(MOCK_USER);
-      localStorage.setItem('usina_docs_user', JSON.stringify(MOCK_USER));
-      return true;
-    }
-    return false;
   };
 
-  const logout = () => {
+  useEffect(() => {
+    // Configura o listener ANTES de verificar a sessão existente
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
+          // Usa setTimeout para evitar deadlock com Supabase
+          setTimeout(() => {
+            checkAdminRole(currentSession.user.id);
+          }, 0);
+        } else {
+          setIsAdmin(false);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // Verifica sessão existente
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      
+      if (existingSession?.user) {
+        checkAdminRole(existingSession.user.id);
+      }
+      
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: !!data.session };
+    } catch (err) {
+      return { success: false, error: 'Erro ao realizar login' };
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('usina_docs_user');
+    setSession(null);
+    setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, session, isLoading, login, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

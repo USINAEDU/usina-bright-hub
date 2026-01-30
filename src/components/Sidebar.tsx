@@ -200,11 +200,11 @@ export default function Sidebar({
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
             <span className="text-sm font-semibold">
-              {user?.name.charAt(0).toUpperCase()}
+              {user?.email?.charAt(0).toUpperCase() || 'U'}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user?.name}</p>
+            <p className="text-sm font-medium truncate">{user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário'}</p>
             <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email}</p>
           </div>
         </div>
