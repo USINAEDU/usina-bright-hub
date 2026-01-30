@@ -267,6 +267,8 @@ export default function Dashboard() {
         activeSectorId={activeSectorId}
         onSectorSelect={handleSectorSelect}
         onAddSector={handleAddSector}
+        onEditSector={handleEditSector}
+        onDeleteSector={(sector) => confirmDelete('sector', sector.id, sector.name)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
@@ -320,18 +322,6 @@ export default function Dashboard() {
                       Upload de Arquivos
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => handleEditSector(activeSector!)}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Editar Setor
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => confirmDelete('sector', activeSectorId, activeSector!.name)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Excluir Setor
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

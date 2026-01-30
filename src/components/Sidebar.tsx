@@ -20,6 +20,9 @@ import {
   Archive,
   FileBox,
   ChevronRight,
+  MoreVertical,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import logoUsina from '@/assets/logo-usina-branca.png';
 import {
@@ -33,6 +36,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Sector } from '@/types';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Folder,
@@ -52,6 +62,8 @@ interface SidebarProps {
   activeSectorId: string | null;
   onSectorSelect: (sectorId: string) => void;
   onAddSector: () => void;
+  onEditSector: (sector: Sector) => void;
+  onDeleteSector: (sector: Sector) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }
@@ -60,6 +72,8 @@ export default function Sidebar({
   activeSectorId,
   onSectorSelect,
   onAddSector,
+  onEditSector,
+  onDeleteSector,
   searchQuery,
   onSearchChange,
 }: SidebarProps) {
@@ -121,34 +135,61 @@ export default function Sidebar({
             const docCount = getSectorDocumentCount(sector.id);
 
             return (
-              <motion.button
+              <motion.div
                 key={sector.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => onSectorSelect(sector.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-all group ${
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg mb-1 transition-all group ${
                   isActive
                     ? 'bg-sidebar-accent text-sidebar-foreground'
                     : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50'
                 }`}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="flex-1 text-left text-sm font-medium truncate">
-                  {sector.name}
-                </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  isActive 
-                    ? 'bg-sidebar-foreground/20' 
-                    : 'bg-sidebar-accent text-sidebar-foreground/60'
-                }`}>
-                  {docCount}
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${
-                  isActive ? 'rotate-90' : 'opacity-0 group-hover:opacity-100'
-                }`} />
-              </motion.button>
+                <button
+                  onClick={() => onSectorSelect(sector.id)}
+                  className="flex-1 flex items-center gap-3 min-w-0"
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="flex-1 text-left text-sm font-medium truncate">
+                    {sector.name}
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    isActive 
+                      ? 'bg-sidebar-foreground/20' 
+                      : 'bg-sidebar-accent text-sidebar-foreground/60'
+                  }`}>
+                    {docCount}
+                  </span>
+                </button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={() => onEditSector(sector)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => onDeleteSector(sector)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </motion.div>
             );
           })}
         </AnimatePresence>
