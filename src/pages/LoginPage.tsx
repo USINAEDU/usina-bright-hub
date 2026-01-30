@@ -19,9 +19,9 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const success = await login(email, password);
+    const result = await login(email, password);
     
-    if (success) {
+    if (result.success) {
       toast({
         title: 'Bem-vindo!',
         description: 'Login realizado com sucesso.',
@@ -29,7 +29,7 @@ export default function LoginPage() {
     } else {
       toast({
         title: 'Erro no login',
-        description: 'Email ou senha incorretos.',
+        description: result.error || 'Email ou senha incorretos.',
         variant: 'destructive',
       });
     }
@@ -102,22 +102,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          {/* Demo credentials */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-6 p-4 rounded-lg bg-muted/50 border border-border/50"
-          >
-            <p className="text-sm text-muted-foreground text-center mb-2">
-              Credenciais de demonstração:
-            </p>
-            <div className="text-sm text-center space-y-1">
-              <p className="font-mono text-foreground">admin@usinaedu.com.br</p>
-              <p className="font-mono text-foreground">admin123</p>
-            </div>
-          </motion.div>
         </div>
       </motion.div>
     </div>

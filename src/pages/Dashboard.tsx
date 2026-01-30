@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDocumentStore } from '@/contexts/DocumentStoreContext';
+import { supabase } from '@/integrations/supabase';
 import Sidebar from '@/components/Sidebar';
 import BreadcrumbNav from '@/components/BreadcrumbNav';
 import ContentCard from '@/components/ContentCard';
@@ -139,12 +140,12 @@ export default function Dashboard() {
     setSectorDialogOpen(true);
   };
 
-  const handleSaveSector = (data: { name: string; icon: string }) => {
+  const handleSaveSector = async (data: { name: string; icon: string }) => {
     if (sectorDialogMode === 'create') {
-      addSector(data);
+      await addSector(data);
       toast({ title: 'Setor criado', description: `O setor "${data.name}" foi criado.` });
     } else if (editingSector) {
-      updateSector(editingSector.id, data);
+      await updateSector(editingSector.id, data);
       toast({ title: 'Setor atualizado', description: `O setor "${data.name}" foi atualizado.` });
     }
   };
@@ -161,21 +162,21 @@ export default function Dashboard() {
     setFolderDialogOpen(true);
   };
 
-  const handleSaveFolder = (name: string) => {
+  const handleSaveFolder = async (name: string) => {
     if (folderDialogMode === 'create' && activeSectorId) {
-      addFolder({
+      await addFolder({
         sectorId: activeSectorId,
         parentFolderId: currentFolderId,
         name,
       });
       toast({ title: 'Pasta criada', description: `A pasta "${name}" foi criada.` });
     } else if (editingFolder) {
-      updateFolder(editingFolder.id, { name });
+      await updateFolder(editingFolder.id, { name });
       toast({ title: 'Pasta renomeada', description: `A pasta foi renomeada para "${name}".` });
     }
   };
 
-  const handleUpload = (files: { file: File; name: string; description: string }[]) => {
+  const handleUpload = async (files: { file: File; name: string; description: string }[]) => {
     if (!activeSectorId || !currentFolderId) {
       toast({
         title: 'Selecione uma pasta',
@@ -185,27 +186,41 @@ export default function Dashboard() {
       return;
     }
 
-    files.forEach(({ file, name, description }) => {
-      // Use Object URL instead of base64 to avoid localStorage limits
-      const fileUrl = URL.createObjectURL(file);
+    for (const { file, name, description } of files) {
+      // Upload para o Supabase Storage
+      const filePath = `${activeSectorId}/${currentFolderId}/${Date.now()}_${file.name}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+      
+      if (uploadError) {
+        toast({
+          title: 'Erro no upload',
+          description: `Falha ao enviar "${name}": ${uploadError.message}`,
+          variant: 'destructive',
+        });
+        continue;
+      }
+
       const type = file.type.includes('pdf')
         ? 'pdf'
         : file.type.includes('image')
         ? 'image'
         : 'doc';
 
-      addDocument({
+      await addDocument({
         sectorId: activeSectorId,
         folderId: currentFolderId,
         name,
         description,
         type,
-        fileUrl,
+        fileUrl: filePath, // Agora é o path no storage
         fileName: file.name,
         fileSize: file.size,
         mimeType: file.type,
       });
-    });
+    }
 
     toast({
       title: 'Upload concluído',
@@ -218,9 +233,9 @@ export default function Dashboard() {
     setDocumentDialogOpen(true);
   };
 
-  const handleSaveDocument = (data: { name: string; description: string }) => {
+  const handleSaveDocument = async (data: { name: string; description: string }) => {
     if (editingDocument) {
-      updateDocument(editingDocument.id, data);
+      await updateDocument(editingDocument.id, data);
       toast({ title: 'Documento atualizado', description: `O documento "${data.name}" foi atualizado.` });
       // Update viewing document if it's the same one
       if (viewingDocument?.id === editingDocument.id) {
@@ -229,22 +244,22 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
 
     switch (deleteTarget.type) {
       case 'sector':
-        deleteSector(deleteTarget.id);
+        await deleteSector(deleteTarget.id);
         if (activeSectorId === deleteTarget.id) {
           setActiveSectorId(null);
           setBreadcrumbs([]);
         }
         break;
       case 'folder':
-        deleteFolder(deleteTarget.id);
+        await deleteFolder(deleteTarget.id);
         break;
       case 'document':
-        deleteDocument(deleteTarget.id);
+        await deleteDocument(deleteTarget.id);
         break;
     }
 
