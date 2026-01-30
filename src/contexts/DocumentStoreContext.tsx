@@ -48,7 +48,16 @@ function loadFromStorage<T>(key: string, defaultValue: T): T {
 
 function saveToStorage<T>(key: string, value: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    // For documents, strip out the fileUrl to avoid localStorage quota issues
+    // fileUrl uses blob URLs which are session-only anyway
+    let dataToSave = value;
+    if (key === STORAGE_KEYS.documents && Array.isArray(value)) {
+      dataToSave = (value as unknown as Document[]).map(doc => ({
+        ...doc,
+        fileUrl: '' // Don't persist blob URLs
+      })) as unknown as T;
+    }
+    localStorage.setItem(key, JSON.stringify(dataToSave));
   } catch (error) {
     console.error(`Error saving to localStorage:`, error);
   }
