@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -8,14 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FileText, Image, FileIcon, Download, Share2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { FileText, Image, FileIcon, Download, Share2, ExternalLink } from 'lucide-react';
 import { Document as DocType } from '@/types';
-
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface DocumentPreviewProps {
   document: DocType | null;
@@ -28,27 +20,7 @@ export default function DocumentPreview({
   open,
   onOpenChange,
 }: DocumentPreviewProps) {
-  const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1);
-
   if (!document) return null;
-
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    setPageNumber(1);
-  };
-
-  const getIcon = () => {
-    switch (document.type) {
-      case 'pdf':
-        return <FileText className="w-16 h-16" />;
-      case 'image':
-        return <Image className="w-16 h-16" />;
-      default:
-        return <FileIcon className="w-16 h-16" />;
-    }
-  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B';
@@ -76,20 +48,19 @@ export default function DocumentPreview({
     }
   };
 
-  const goToPreviousPage = () => {
-    setPageNumber(prev => Math.max(prev - 1, 1));
+  const handleOpenInNewTab = () => {
+    window.open(document.fileUrl, '_blank');
   };
 
-  const goToNextPage = () => {
-    setPageNumber(prev => Math.min(prev + 1, numPages));
-  };
-
-  const zoomIn = () => {
-    setScale(prev => Math.min(prev + 0.25, 2));
-  };
-
-  const zoomOut = () => {
-    setScale(prev => Math.max(prev - 0.25, 0.5));
+  const getIcon = () => {
+    switch (document.type) {
+      case 'pdf':
+        return <FileText className="w-16 h-16" />;
+      case 'image':
+        return <Image className="w-16 h-16" />;
+      default:
+        return <FileIcon className="w-16 h-16" />;
+    }
   };
 
   return (
@@ -108,6 +79,9 @@ export default function DocumentPreview({
             <Button variant="outline" size="sm" onClick={handleShare}>
               <Share2 className="w-4 h-4" />
             </Button>
+            <Button variant="outline" size="sm" onClick={handleOpenInNewTab}>
+              <ExternalLink className="w-4 h-4" />
+            </Button>
             <Button size="sm" onClick={handleDownload}>
               <Download className="w-4 h-4 mr-2" />
               Download
@@ -116,7 +90,7 @@ export default function DocumentPreview({
         </DialogHeader>
 
         {/* Preview Area */}
-        <div className="flex-1 overflow-auto rounded-lg bg-muted/30 flex items-center justify-center min-h-[400px] relative">
+        <div className="flex-1 overflow-hidden rounded-lg bg-muted/30 flex items-center justify-center min-h-[400px]">
           {document.type === 'image' ? (
             <motion.img
               initial={{ opacity: 0, scale: 0.9 }}
@@ -126,33 +100,11 @@ export default function DocumentPreview({
               className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg"
             />
           ) : document.type === 'pdf' ? (
-            <div className="flex flex-col items-center">
-              <Document
-                file={document.fileUrl}
-                onLoadSuccess={onDocumentLoadSuccess}
-                loading={
-                  <div className="flex items-center justify-center p-8">
-                    <div className="animate-pulse text-muted-foreground">Carregando PDF...</div>
-                  </div>
-                }
-                error={
-                  <div className="text-center p-8">
-                    <div className="inline-flex p-6 rounded-2xl bg-destructive/10 text-destructive mb-4">
-                      <FileText className="w-12 h-12" />
-                    </div>
-                    <p className="text-muted-foreground">Erro ao carregar PDF</p>
-                  </div>
-                }
-              >
-                <Page 
-                  pageNumber={pageNumber} 
-                  scale={scale}
-                  className="shadow-lg rounded-lg overflow-hidden"
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
-                />
-              </Document>
-            </div>
+            <iframe
+              src={document.fileUrl}
+              title={document.name}
+              className="w-full h-[60vh] rounded-lg border-0"
+            />
           ) : (
             <div className="text-center p-8">
               <div className="inline-flex p-6 rounded-2xl bg-primary/10 text-primary mb-4">
@@ -165,49 +117,19 @@ export default function DocumentPreview({
                 {formatFileSize(document.fileSize)}
               </p>
               <p className="text-sm text-muted-foreground mt-4">
-                Este tipo de arquivo não possui visualização. Faça o download para abrir.
+                Este tipo de arquivo não possui visualização inline.
               </p>
+              <Button className="mt-4" onClick={handleDownload}>
+                <Download className="w-4 h-4 mr-2" />
+                Fazer Download
+              </Button>
             </div>
           )}
         </div>
 
-        {/* PDF Controls */}
-        {document.type === 'pdf' && numPages > 0 && (
-          <div className="flex items-center justify-center gap-4 pt-4 border-t">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={zoomOut} disabled={scale <= 0.5}>
-                <ZoomOut className="w-4 h-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground w-16 text-center">
-                {Math.round(scale * 100)}%
-              </span>
-              <Button variant="outline" size="icon" onClick={zoomIn} disabled={scale >= 2}>
-                <ZoomIn className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="h-6 w-px bg-border" />
-
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={goToPreviousPage} disabled={pageNumber <= 1}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground min-w-[80px] text-center">
-                {pageNumber} / {numPages}
-              </span>
-              <Button variant="outline" size="icon" onClick={goToNextPage} disabled={pageNumber >= numPages}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/* Footer Info */}
-        <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
+        <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground border-t">
           <span>{document.fileName} • {formatFileSize(document.fileSize)}</span>
-          {document.type === 'image' && (
-            <span>Clique para ampliar</span>
-          )}
         </div>
       </DialogContent>
     </Dialog>
