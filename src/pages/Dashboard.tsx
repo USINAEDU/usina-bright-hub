@@ -370,6 +370,25 @@ export default function Dashboard() {
                       </div>
                     </div>
                   )}
+                  {searchResults.folders.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-3">Pastas</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {searchResults.folders.map((folder, i) => (
+                          <ContentCard
+                            key={folder.id}
+                            item={folder}
+                            type="folder"
+                            onClick={() => {
+                              handleSectorSelect(folder.sectorId);
+                              handleFolderClick(folder);
+                            }}
+                            index={i}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {searchResults.documents.length > 0 && (
                     <div>
                       <h3 className="text-sm font-medium text-muted-foreground mb-3">Documentos</h3>
