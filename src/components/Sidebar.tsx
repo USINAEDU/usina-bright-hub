@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDocumentStore } from '@/hooks/useDocumentStore';
+import { useDocumentStore } from '@/contexts/DocumentStoreContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
