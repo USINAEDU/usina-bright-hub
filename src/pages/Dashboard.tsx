@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useDocumentStore } from '@/hooks/useDocumentStore';
+import { useDocumentStore } from '@/contexts/DocumentStoreContext';
 import Sidebar from '@/components/Sidebar';
 import BreadcrumbNav from '@/components/BreadcrumbNav';
 import ContentCard from '@/components/ContentCard';
