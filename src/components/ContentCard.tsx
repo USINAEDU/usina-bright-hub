@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Folder, Image, FileIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Document, Folder as FolderType } from '@/types';
@@ -21,7 +22,7 @@ interface ContentCardProps {
   index?: number;
 }
 
-export default function ContentCard({ 
+const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({ 
   item, 
   type, 
   onClick, 
@@ -29,7 +30,7 @@ export default function ContentCard({
   onDelete,
   onContextMenu, 
   index = 0 
-}: ContentCardProps) {
+}, ref) => {
   const isDocument = type === 'document';
   const doc = item as Document;
 
@@ -56,6 +57,7 @@ export default function ContentCard({
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
@@ -136,4 +138,8 @@ export default function ContentCard({
       </div>
     </motion.div>
   );
-}
+});
+
+ContentCard.displayName = 'ContentCard';
+
+export default ContentCard;
