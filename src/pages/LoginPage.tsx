@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import logoUsina from '@/assets/logo-usina-branca.png';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -50,15 +51,12 @@ export default function LoginPage() {
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring' }}
-            className="flex items-center justify-center gap-3 mb-8"
+            className="flex flex-col items-center justify-center mb-8"
           >
-            <div className="p-3 rounded-xl bg-primary text-primary-foreground">
-              <FileText className="w-8 h-8" />
+            <div className="p-4 rounded-xl bg-primary mb-3">
+              <img src={logoUsina} alt="Usina Docs" className="h-12 w-auto" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Usina Docs</h1>
-              <p className="text-sm text-muted-foreground">Gestão Documental</p>
-            </div>
+            <p className="text-sm text-muted-foreground">Gestão Documental</p>
           </motion.div>
 
           {/* Form */}
