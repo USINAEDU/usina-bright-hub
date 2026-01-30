@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -11,8 +10,22 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
+
+// Fallback para crypto.randomUUID em contextos não-HTTPS
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback usando Math.random
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
 
 interface UploadFile {
   file: File;
@@ -45,9 +58,10 @@ export default function UploadDialog({
   const [isUploading, setIsUploading] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
+    console.log('Files dropped:', acceptedFiles);
     const newFiles: UploadFile[] = acceptedFiles.map((file) => ({
       file,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       progress: 0,
       status: 'pending',
       name: file.name.replace(/\.[^/.]+$/, ''),
@@ -116,6 +130,9 @@ export default function UploadDialog({
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Upload de Documentos</DialogTitle>
+          <DialogDescription>
+            Arraste arquivos ou clique para selecionar documentos PDF, imagens ou DOCX.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 py-4">
