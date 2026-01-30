@@ -8,6 +8,7 @@ import SectorDialog from '@/components/SectorDialog';
 import FolderDialog from '@/components/FolderDialog';
 import UploadDialog from '@/components/UploadDialog';
 import DocumentDialog from '@/components/DocumentDialog';
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
 import DocumentViewer from '@/components/DocumentViewer';
 import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
@@ -24,16 +25,6 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Plus, FolderPlus, Upload, Pencil, Trash2, LayoutGrid, List } from 'lucide-react';
 import { BreadcrumbItem, Folder, Document, Sector } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -512,24 +503,13 @@ export default function Dashboard() {
         initialData={editingDocument ? { name: editingDocument.name, description: editingDocument.description } : undefined}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir "{deleteTarget?.name}"?
-              {deleteTarget?.type === 'sector' && ' Todos os documentos e pastas deste setor serão excluídos.'}
-              {deleteTarget?.type === 'folder' && ' Todos os documentos desta pasta serão excluídos.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        itemName={deleteTarget?.name || ''}
+        itemType={deleteTarget?.type || 'document'}
+      />
     </div>
   );
 }
