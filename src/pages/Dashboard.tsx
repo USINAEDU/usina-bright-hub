@@ -190,28 +190,25 @@ export default function Dashboard() {
     }
 
     files.forEach(({ file, name, description }) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const fileUrl = e.target?.result as string;
-        const type = file.type.includes('pdf')
-          ? 'pdf'
-          : file.type.includes('image')
-          ? 'image'
-          : 'doc';
+      // Use Object URL instead of base64 to avoid localStorage limits
+      const fileUrl = URL.createObjectURL(file);
+      const type = file.type.includes('pdf')
+        ? 'pdf'
+        : file.type.includes('image')
+        ? 'image'
+        : 'doc';
 
-        addDocument({
-          sectorId: activeSectorId,
-          folderId: currentFolderId,
-          name,
-          description,
-          type,
-          fileUrl,
-          fileName: file.name,
-          fileSize: file.size,
-          mimeType: file.type,
-        });
-      };
-      reader.readAsDataURL(file);
+      addDocument({
+        sectorId: activeSectorId,
+        folderId: currentFolderId,
+        name,
+        description,
+        type,
+        fileUrl,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+      });
     });
 
     toast({
