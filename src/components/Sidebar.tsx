@@ -15,6 +15,10 @@ import {
   Monitor,
   Settings,
   Building2,
+  Briefcase,
+  BookOpen,
+  Archive,
+  FileBox,
   ChevronRight,
 } from 'lucide-react';
 import logoUsina from '@/assets/logo-usina-branca.png';
@@ -38,6 +42,10 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Monitor,
   Settings,
   Building2,
+  Briefcase,
+  BookOpen,
+  Archive,
+  FileBox,
 };
 
 interface SidebarProps {

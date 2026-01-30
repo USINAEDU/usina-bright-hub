@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,8 +52,16 @@ export default function SectorDialog({
   initialData,
   mode,
 }: SectorDialogProps) {
-  const [name, setName] = useState(initialData?.name || '');
-  const [selectedIcon, setSelectedIcon] = useState(initialData?.icon || 'Folder');
+  const [name, setName] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState('Folder');
+
+  // Sync initial values when dialog opens
+  useEffect(() => {
+    if (open) {
+      setName(initialData?.name || '');
+      setSelectedIcon(initialData?.icon || 'Folder');
+    }
+  }, [open, initialData]);
 
   const handleSave = () => {
     if (name.trim()) {

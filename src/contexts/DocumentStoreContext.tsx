@@ -103,9 +103,17 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteSector = useCallback((id: string) => {
+    // Clean up blob URLs before deleting sector documents
+    setDocuments(prev => {
+      prev.forEach(d => {
+        if (d.sectorId === id && d.fileUrl?.startsWith('blob:')) {
+          URL.revokeObjectURL(d.fileUrl);
+        }
+      });
+      return prev.filter(d => d.sectorId !== id);
+    });
     setSectors(prev => prev.filter(s => s.id !== id));
     setFolders(prev => prev.filter(f => f.sectorId !== id));
-    setDocuments(prev => prev.filter(d => d.sectorId !== id));
   }, []);
 
   const getSectorDocumentCount = useCallback((sectorId: string): number => {
@@ -139,7 +147,15 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   const deleteFolder = useCallback((id: string) => {
     setFolders(prev => {
       const folderIdsToDelete = getAllNestedFolderIds(id, prev);
-      setDocuments(docs => docs.filter(d => !folderIdsToDelete.includes(d.folderId)));
+      setDocuments(docs => {
+        // Clean up blob URLs before deleting documents
+        docs.forEach(d => {
+          if (folderIdsToDelete.includes(d.folderId) && d.fileUrl?.startsWith('blob:')) {
+            URL.revokeObjectURL(d.fileUrl);
+          }
+        });
+        return docs.filter(d => !folderIdsToDelete.includes(d.folderId));
+      });
       return prev.filter(f => !folderIdsToDelete.includes(f.id));
     });
   }, [getAllNestedFolderIds]);
@@ -170,7 +186,14 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteDocument = useCallback((id: string) => {
-    setDocuments(prev => prev.filter(d => d.id !== id));
+    setDocuments(prev => {
+      const docToDelete = prev.find(d => d.id === id);
+      // Clean up blob URL to prevent memory leaks
+      if (docToDelete?.fileUrl && docToDelete.fileUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(docToDelete.fileUrl);
+      }
+      return prev.filter(d => d.id !== id);
+    });
   }, []);
 
   const getDocumentsByFolder = useCallback((folderId: string): Document[] => {
