@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
   Search, 
-  FileText, 
   Plus, 
   LogOut,
   Folder,
@@ -18,6 +17,7 @@ import {
   Building2,
   ChevronRight,
 } from 'lucide-react';
+import logoUsina from '@/assets/logo-usina-branca.png';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,13 +73,7 @@ export default function Sidebar({
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-sidebar-accent">
-            <FileText className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold">Usina Docs</h1>
-            <p className="text-xs text-sidebar-foreground/70">Gestão Documental</p>
-          </div>
+          <img src={logoUsina} alt="Usina Docs" className="h-10 w-auto" />
         </div>
       </div>
 
