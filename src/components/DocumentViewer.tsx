@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { FileText, Image, FileIcon, Download, ArrowLeft, ExternalLink } from 'lucide-react';
+import { FileText, Image, FileIcon, Download, ArrowLeft, ExternalLink, AlertTriangle, Loader2 } from 'lucide-react';
 import { Document as DocType } from '@/types';
 
 interface DocumentViewerProps {
@@ -9,6 +10,9 @@ interface DocumentViewerProps {
 }
 
 export default function DocumentViewer({ document, onBack }: DocumentViewerProps) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -16,10 +20,33 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
   };
 
   const handleDownload = () => {
-    const link = window.document.createElement('a');
-    link.href = document.fileUrl;
-    link.download = document.fileName;
-    link.click();
+    // For production URLs (Supabase Storage), use fetch to download
+    if (document.fileUrl.startsWith('http')) {
+      fetch(document.fileUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const link = window.document.createElement('a');
+          link.href = url;
+          link.download = document.fileName;
+          link.click();
+          URL.revokeObjectURL(url);
+        })
+        .catch(() => {
+          // Fallback to direct link
+          const link = window.document.createElement('a');
+          link.href = document.fileUrl;
+          link.download = document.fileName;
+          link.target = '_blank';
+          link.click();
+        });
+    } else {
+      // For blob URLs, direct download
+      const link = window.document.createElement('a');
+      link.href = document.fileUrl;
+      link.download = document.fileName;
+      link.click();
+    }
   };
 
   const handleOpenInNewTab = () => {
@@ -36,6 +63,19 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
         return <FileIcon className="w-16 h-16" />;
     }
   };
+
+  const handleLoad = () => {
+    setLoading(false);
+    setError(false);
+  };
+
+  const handleError = () => {
+    setLoading(false);
+    setError(true);
+  };
+
+  // Check if fileUrl is valid
+  const hasValidUrl = document.fileUrl && document.fileUrl.length > 0;
 
   return (
     <motion.div
@@ -63,21 +103,70 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 overflow-hidden rounded-lg bg-muted/30 flex items-center justify-center">
-        {document.type === 'image' ? (
-          <motion.img
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            src={document.fileUrl}
-            alt={document.name}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-          />
+      <div className="flex-1 overflow-hidden rounded-lg bg-muted/30 flex items-center justify-center min-h-[400px]">
+        {!hasValidUrl ? (
+          // No valid URL - file needs re-upload (localStorage limitation)
+          <div className="text-center p-8">
+            <div className="inline-flex p-6 rounded-2xl bg-destructive/10 text-destructive mb-4">
+              <AlertTriangle className="w-16 h-16" />
+            </div>
+            <p className="text-lg font-medium text-foreground">
+              Arquivo não disponível
+            </p>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md">
+              Este arquivo foi salvo em uma sessão anterior e precisa ser re-uploadado.
+              Para persistência permanente, conecte ao Lovable Cloud.
+            </p>
+          </div>
+        ) : error ? (
+          // Error loading file
+          <div className="text-center p-8">
+            <div className="inline-flex p-6 rounded-2xl bg-destructive/10 text-destructive mb-4">
+              <AlertTriangle className="w-16 h-16" />
+            </div>
+            <p className="text-lg font-medium text-foreground">
+              Erro ao carregar arquivo
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Não foi possível exibir o arquivo. Tente abrir em uma nova aba.
+            </p>
+            <Button variant="outline" className="mt-4" onClick={handleOpenInNewTab}>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Abrir em Nova Aba
+            </Button>
+          </div>
+        ) : document.type === 'image' ? (
+          <>
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            )}
+            <motion.img
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: loading ? 0 : 1, scale: 1 }}
+              src={document.fileUrl}
+              alt={document.name}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+              onLoad={handleLoad}
+              onError={handleError}
+            />
+          </>
         ) : document.type === 'pdf' ? (
-          <iframe
-            src={document.fileUrl}
-            title={document.name}
-            className="w-full h-full rounded-lg border-0"
-          />
+          <div className="w-full h-full relative">
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            )}
+            <iframe
+              src={document.fileUrl}
+              title={document.name}
+              className="w-full h-full rounded-lg border-0"
+              onLoad={handleLoad}
+              onError={handleError}
+            />
+          </div>
         ) : (
           <div className="text-center p-8">
             <div className="inline-flex p-6 rounded-2xl bg-primary/10 text-primary mb-4">
@@ -102,14 +191,18 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
           {document.fileName} • {formatFileSize(document.fileSize)}
         </span>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleOpenInNewTab}>
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Abrir em Nova Aba
-          </Button>
-          <Button size="sm" onClick={handleDownload}>
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </Button>
+          {hasValidUrl && (
+            <>
+              <Button variant="outline" size="sm" onClick={handleOpenInNewTab}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Abrir em Nova Aba
+              </Button>
+              <Button size="sm" onClick={handleDownload}>
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </motion.div>
