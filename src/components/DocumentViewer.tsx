@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FileText, Image, FileIcon, ArrowLeft, AlertTriangle, Loader2 } from 'lucide-react';
 import { Document as DocType } from '@/types';
+import PdfViewer from './PdfViewer';
 
 interface DocumentViewerProps {
   document: DocType;
@@ -117,23 +118,10 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
           </>
         ) : document.type === 'pdf' ? (
           <div className="w-full h-full relative">
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            )}
-            <iframe
-              src={`${document.fileUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-              title={document.name}
-              className="w-full h-full rounded-lg border-0"
-              onLoad={handleLoad}
-              onError={handleError}
-              style={{ pointerEvents: 'auto' }}
-            />
-            {/* Overlay para bloquear clique direito */}
-            <div 
-              className="absolute inset-0 pointer-events-none"
-              onContextMenu={(e) => e.preventDefault()}
+            <PdfViewer
+              fileUrl={document.fileUrl}
+              onLoadSuccess={handleLoad}
+              onLoadError={handleError}
             />
           </div>
         ) : (
