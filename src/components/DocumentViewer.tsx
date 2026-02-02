@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { FileText, Image, FileIcon, Download, ArrowLeft, ExternalLink, AlertTriangle, Loader2 } from 'lucide-react';
+import { FileText, Image, FileIcon, ArrowLeft, AlertTriangle, Loader2 } from 'lucide-react';
 import { Document as DocType } from '@/types';
 
 interface DocumentViewerProps {
@@ -19,39 +19,6 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  const handleDownload = () => {
-    // For production URLs (Supabase Storage), use fetch to download
-    if (document.fileUrl.startsWith('http')) {
-      fetch(document.fileUrl)
-        .then(response => response.blob())
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          const link = window.document.createElement('a');
-          link.href = url;
-          link.download = document.fileName;
-          link.click();
-          URL.revokeObjectURL(url);
-        })
-        .catch(() => {
-          // Fallback to direct link
-          const link = window.document.createElement('a');
-          link.href = document.fileUrl;
-          link.download = document.fileName;
-          link.target = '_blank';
-          link.click();
-        });
-    } else {
-      // For blob URLs, direct download
-      const link = window.document.createElement('a');
-      link.href = document.fileUrl;
-      link.download = document.fileName;
-      link.click();
-    }
-  };
-
-  const handleOpenInNewTab = () => {
-    window.open(document.fileUrl, '_blank');
-  };
 
   const getIcon = () => {
     switch (document.type) {
@@ -128,12 +95,8 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
               Erro ao carregar arquivo
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Não foi possível exibir o arquivo. Tente abrir em uma nova aba.
+              Não foi possível exibir o arquivo.
             </p>
-            <Button variant="outline" className="mt-4" onClick={handleOpenInNewTab}>
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Abrir em Nova Aba
-            </Button>
           </div>
         ) : document.type === 'image' ? (
           <>
@@ -160,11 +123,17 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
               </div>
             )}
             <iframe
-              src={document.fileUrl}
+              src={`${document.fileUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
               title={document.name}
               className="w-full h-full rounded-lg border-0"
               onLoad={handleLoad}
               onError={handleError}
+              style={{ pointerEvents: 'auto' }}
+            />
+            {/* Overlay para bloquear clique direito */}
+            <div 
+              className="absolute inset-0 pointer-events-none"
+              onContextMenu={(e) => e.preventDefault()}
             />
           </div>
         ) : (
@@ -186,24 +155,10 @@ export default function DocumentViewer({ document, onBack }: DocumentViewerProps
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
+      <div className="flex items-center justify-center pt-4 border-t border-border mt-4">
         <span className="text-sm text-muted-foreground">
           {document.fileName} • {formatFileSize(document.fileSize)}
         </span>
-        <div className="flex gap-2">
-          {hasValidUrl && (
-            <>
-              <Button variant="outline" size="sm" onClick={handleOpenInNewTab}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Abrir em Nova Aba
-              </Button>
-              <Button size="sm" onClick={handleDownload}>
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-            </>
-          )}
-        </div>
       </div>
     </motion.div>
   );
